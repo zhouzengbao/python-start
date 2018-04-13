@@ -1,0 +1,59 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+import MySQLdb
+import os
+
+db = MySQLdb.connect("localhost", "root", "1234", "imgs", charset="utf8")
+
+cursor = db.cursor()
+cursor.execute("""select ifnull(CONCAT( d.doctor_name , '-' , i.merchant_doctor_id), '') , url, type
+from `paas_merchant_doctor_img` i
+left join `paas_merchant_doctor` d
+on d.id = i.merchant_doctor_id""")
+
+results = cursor.fetchall()
+
+imgHeader = '图片地址'
+
+credentials = '1Credentials'  # 医生资格证书 1
+practisingCertificate = '2PractisingCertificate'  # 医生执业证书 2
+otherCertificate = '3OtherCertificate'  # 其他证书 3
+
+for r in results:
+    doctorName = r[0]
+    if doctorName is None:
+        doctorName = "没有名字"
+    url = imgHeader + r[1]
+    thisType = r[2]
+    localPath = ''
+    if str(thisType) == "1":
+        localPath = credentials
+    elif str(thisType) == "2":
+        localPath = practisingCertificate
+    elif str(thisType) == "3":
+        localPath = otherCertificate
+    else:
+        print thisType
+        print(" 没有类型")
+    s = url[-4:]
+
+    i = 0
+    # 拼装文件路径
+    fileName = '/Users/zb.zhou/Documents/img/' + localPath + "/" + doctorName + "-" + str(i) + s
+
+    try:
+        # 如果图片存在
+        while os.path.exists(fileName):
+            i += 1
+            # 重新拼装文件路径
+            fileName = '/Users/zb.zhou/Documents/img/' + localPath + "/" + doctorName + "-" + str(i) + s
+        # 打印参数
+        print "i ->" + str(i) + " ; thisType -> " + str(
+            thisType) + "; localPath -> " + localPath + "    ;   fileName -> " + fileName
+        # 保存图片
+        # urllib.urlretrieve(url, fileName)
+    except Exception, e:
+        print e
+
+cursor.close()
+db.close()
